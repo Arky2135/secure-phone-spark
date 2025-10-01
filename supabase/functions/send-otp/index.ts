@@ -58,48 +58,77 @@ serve(async (req) => {
 
     console.log("OTP stored in database:", data.id);
 
-    // TODO: Send SMS using Twilio
-    // For now, we'll just log the OTP (in production, you'd send via SMS)
-    console.log(`OTP Code for ${phoneNumber}: ${otpCode}`);
-    
-    // In production, uncomment and configure Twilio:
-    /*
+    // Send SMS using Twilio
     const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
     const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
     const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
 
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
-    
-    const twilioResponse = await fetch(twilioUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        To: phoneNumber,
-        From: twilioPhoneNumber,
-        Body: `Your verification code is: ${otpCode}. Valid for 10 minutes.`,
-      }),
-    });
-
-    if (!twilioResponse.ok) {
-      throw new Error("Failed to send SMS");
+    if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+      console.warn("Twilio credentials not configured. OTP:", otpCode);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "OTP generated (Twilio not configured)",
+          devOTP: otpCode,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
-    */
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "OTP sent successfully",
-        // In development, return the OTP for testing
-        devOTP: otpCode,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+    try {
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+      
+      const twilioResponse = await fetch(twilioUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: phoneNumber,
+          From: twilioPhoneNumber,
+          Body: `Hello ${name}! Your verification code is: ${otpCode}. Valid for 5 minutes.`,
+        }),
+      });
+
+      if (!twilioResponse.ok) {
+        const errorText = await twilioResponse.text();
+        console.error("Twilio error:", errorText);
+        throw new Error("Failed to send SMS via Twilio");
       }
-    );
+
+      const twilioData = await twilioResponse.json();
+      console.log("SMS sent successfully via Twilio:", twilioData.sid);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "OTP sent successfully via SMS",
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    } catch (twilioError: any) {
+      console.error("Error sending SMS via Twilio:", twilioError);
+      // Still return success since OTP is stored in DB
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "OTP generated (SMS sending failed)",
+          devOTP: otpCode,
+          error: twilioError.message,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
   } catch (error: any) {
     console.error("Error in send-otp function:", error);
     return new Response(
