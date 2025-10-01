@@ -29,7 +29,8 @@ const Success = () => {
       const { data, error } = await supabase
         .from("phone_verifications")
         .select("id, phone_number, name, verified, created_at")
-        .order("created_at", { ascending: true })
+        .eq("verified", true)
+        .order("created_at", { ascending: false })
         .limit(10);
 
       if (error) throw error;
@@ -114,15 +115,6 @@ const Success = () => {
                           <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">
                             P{String(index + 1).padStart(3, '0')}
                           </span>
-                          {record.verified ? (
-                            <span className="text-xs font-medium bg-success/10 text-success px-2 py-0.5 rounded">
-                              Verified
-                            </span>
-                          ) : (
-                            <span className="text-xs font-medium bg-destructive/10 text-destructive px-2 py-0.5 rounded">
-                              Failed
-                            </span>
-                          )}
                           <p className="font-medium text-foreground">{record.name}</p>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">{record.phone_number}</p>
