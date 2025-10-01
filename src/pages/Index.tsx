@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Shield, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CountryCodeSelect } from "@/components/CountryCodeSelect";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+    countryCode: "+1",
     phoneNumber: "",
   });
 
@@ -43,9 +45,11 @@ const Index = () => {
     setLoading(true);
 
     try {
+      const fullPhoneNumber = formData.countryCode + formData.phoneNumber;
+      
       const { data, error } = await supabase.functions.invoke("send-otp", {
         body: {
-          phoneNumber: formData.phoneNumber,
+          phoneNumber: fullPhoneNumber,
           name: formData.name,
         },
       });
@@ -58,7 +62,7 @@ const Index = () => {
       });
 
       // Navigate to verify page with phone number
-      navigate(`/verify?phone=${encodeURIComponent(formData.phoneNumber)}`);
+      navigate(`/verify?phone=${encodeURIComponent(fullPhoneNumber)}`);
     } catch (error: any) {
       console.error("Error sending OTP:", error);
       toast({
@@ -114,19 +118,26 @@ const Index = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+1 (555) 123-4567"
-                    value={formData.phoneNumber}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phoneNumber: e.target.value })
-                    }
+                <div className="flex gap-2">
+                  <CountryCodeSelect
+                    value={formData.countryCode}
+                    onChange={(code) => setFormData({ ...formData, countryCode: code })}
                     disabled={loading}
-                    className="pl-10 transition-all duration-300 focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
                   />
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="555-123-4567"
+                      value={formData.phoneNumber}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phoneNumber: e.target.value })
+                      }
+                      disabled={loading}
+                      className="pl-10 transition-all duration-300 focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
+                    />
+                  </div>
                 </div>
               </div>
 

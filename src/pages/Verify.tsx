@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,6 +13,8 @@ const Verify = () => {
   const { toast } = useToast();
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
   const phoneNumber = searchParams.get("phone");
 
   useEffect(() => {
@@ -20,6 +22,18 @@ const Verify = () => {
       navigate("/");
     }
   }, [phoneNumber, navigate]);
+
+  // Resend timer countdown
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => {
+        setResendTimer(resendTimer - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setCanResend(true);
+    }
+  }, [resendTimer]);
 
   const handleVerify = async () => {
     if (otp.length !== 6) {
@@ -69,6 +83,8 @@ const Verify = () => {
   };
 
   const handleResend = async () => {
+    if (!canResend) return;
+    
     setLoading(true);
     try {
       const { error } = await supabase.functions.invoke("send-otp", {
@@ -84,6 +100,10 @@ const Verify = () => {
         title: "Code Resent",
         description: "A new verification code has been sent to your phone",
       });
+      
+      // Reset timer
+      setResendTimer(60);
+      setCanResend(false);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -161,18 +181,25 @@ const Verify = () => {
               )}
             </Button>
 
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
                 Didn't receive the code?
               </p>
-              <Button
-                variant="link"
-                onClick={handleResend}
-                disabled={loading}
-                className="text-primary hover:text-accent"
-              >
-                Resend Code
-              </Button>
+              {!canResend ? (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>Resend available in {resendTimer}s</span>
+                </div>
+              ) : (
+                <Button
+                  variant="link"
+                  onClick={handleResend}
+                  disabled={loading}
+                  className="text-primary hover:text-accent"
+                >
+                  Resend Code
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
