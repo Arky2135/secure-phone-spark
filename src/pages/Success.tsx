@@ -1,50 +1,10 @@
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Database, XCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-
-interface VerificationRecord {
-  id: string;
-  phone_number: string;
-  name: string;
-  verified: boolean;
-  created_at: string;
-}
 
 const Success = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [verifications, setVerifications] = useState<VerificationRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchVerifications();
-  }, []);
-
-  const fetchVerifications = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("phone_verifications")
-        .select("id, phone_number, name, verified, created_at")
-        .order("created_at", { ascending: true })
-        .limit(10);
-
-      if (error) throw error;
-      setVerifications(data || []);
-    } catch (error: any) {
-      console.error("Error fetching verifications:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load verification records",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-success/5">
@@ -85,61 +45,6 @@ const Success = () => {
             >
               Back to Home
             </Button>
-          </CardContent>
-        </Card>
-
-        {/* Database Records */}
-        <Card className="border-border/50 shadow-[var(--shadow-soft)] backdrop-blur-sm">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Database className="w-5 h-5 text-primary" />
-              <CardTitle>Verification Records</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <p className="text-center text-muted-foreground">Loading records...</p>
-            ) : verifications.length === 0 ? (
-              <p className="text-center text-muted-foreground">No verification records found</p>
-            ) : (
-              <div className="space-y-3">
-                {verifications.map((record, index) => (
-                  <div
-                    key={record.id}
-                    className="p-4 rounded-lg border border-border/50 bg-card/50 space-y-1"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">
-                            P{String(index + 1).padStart(3, '0')}
-                          </span>
-                          {record.verified ? (
-                            <span className="text-xs font-medium bg-success/10 text-success px-2 py-0.5 rounded">
-                              Verified
-                            </span>
-                          ) : (
-                            <span className="text-xs font-medium bg-destructive/10 text-destructive px-2 py-0.5 rounded">
-                              Failed
-                            </span>
-                          )}
-                          <p className="font-medium text-foreground">{record.name}</p>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">{record.phone_number}</p>
-                      </div>
-                      {record.verified ? (
-                        <CheckCircle2 className="w-4 h-4 text-success" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-destructive" />
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(record.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
           </CardContent>
         </Card>
 

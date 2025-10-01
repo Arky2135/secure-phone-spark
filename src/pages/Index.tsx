@@ -167,6 +167,13 @@ const Index = () => {
           <p className="text-sm text-muted-foreground">
             🔒 Secure • 🚀 Fast • ✅ Reliable
           </p>
+          <Button
+            variant="link"
+            onClick={() => navigate("/auth")}
+            className="text-sm text-primary"
+          >
+            Officer Login
+          </Button>
         </div>
       </div>
     </div>
