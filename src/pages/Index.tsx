@@ -56,6 +56,16 @@ const Index = () => {
 
       if (error) throw error;
 
+      // Check if phone number is already verified
+      if (data?.alreadyVerified) {
+        toast({
+          title: "Already Verified",
+          description: "This phone number is already verified",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "OTP Sent!",
         description: "Check your phone for the verification code",

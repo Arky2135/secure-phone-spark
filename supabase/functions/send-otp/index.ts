@@ -29,15 +29,42 @@ serve(async (req) => {
       throw new Error("Phone number and name are required");
     }
 
-    console.log("Generating OTP for:", phoneNumber);
-
-    // Generate OTP code
-    const otpCode = generateOTP();
-
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Check if phone number is already verified
+    const { data: existingVerification, error: checkError } = await supabase
+      .from("phone_verifications")
+      .select("verified")
+      .eq("phone_number", phoneNumber)
+      .eq("verified", true)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking existing verification:", checkError);
+    }
+
+    if (existingVerification) {
+      console.log("Phone number already verified:", phoneNumber);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "This phone number is already verified",
+          alreadyVerified: true,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log("Generating OTP for:", phoneNumber);
+
+    // Generate OTP code
+    const otpCode = generateOTP();
 
     // Store OTP in database
     const { data, error: dbError } = await supabase
