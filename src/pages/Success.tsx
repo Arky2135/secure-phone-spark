@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Database } from "lucide-react";
+import { CheckCircle2, Database, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +29,6 @@ const Success = () => {
       const { data, error } = await supabase
         .from("phone_verifications")
         .select("id, phone_number, name, verified, created_at")
-        .eq("verified", true)
         .order("created_at", { ascending: false })
         .limit(10);
 
@@ -115,12 +114,23 @@ const Success = () => {
                           <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">
                             P{String(index + 1).padStart(3, '0')}
                           </span>
+                          {record.verified ? (
+                            <span className="text-xs font-medium bg-success/10 text-success px-2 py-0.5 rounded">
+                              Verified
+                            </span>
+                          ) : (
+                            <span className="text-xs font-medium bg-destructive/10 text-destructive px-2 py-0.5 rounded">
+                              Failed
+                            </span>
+                          )}
                           <p className="font-medium text-foreground">{record.name}</p>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">{record.phone_number}</p>
                       </div>
-                      {record.verified && (
+                      {record.verified ? (
                         <CheckCircle2 className="w-4 h-4 text-success" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-destructive" />
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
