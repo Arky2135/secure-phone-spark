@@ -13,7 +13,6 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
@@ -62,49 +61,22 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
 
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            throw new Error("Invalid email or password");
-          }
-          throw error;
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password");
         }
-
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-        });
-      } else {
-        const redirectUrl = `${window.location.origin}/dashboard`;
-        
-        const { error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            emailRedirectTo: redirectUrl,
-          },
-        });
-
-        if (error) {
-          if (error.message.includes("already registered")) {
-            throw new Error("An account with this email already exists");
-          }
-          throw error;
-        }
-
-        toast({
-          title: "Success",
-          description: "Account created successfully. You can now log in.",
-        });
-        
-        setIsLogin(true);
-        setFormData({ email: "", password: "" });
+        throw error;
       }
+
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -135,11 +107,9 @@ const Auth = () => {
         {/* Auth Card */}
         <Card className="border-border/50 shadow-[var(--shadow-soft)] backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>{isLogin ? "Sign In" : "Create Account"}</CardTitle>
+            <CardTitle>Sign In</CardTitle>
             <CardDescription>
-              {isLogin
-                ? "Enter your credentials to access the dashboard"
-                : "Create a new officer account"}
+              Enter your credentials to access the dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -179,21 +149,8 @@ const Auth = () => {
                 disabled={loading}
                 className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-[var(--shadow-glow)] transition-all duration-300"
               >
-                {loading ? "Processing..." : isLogin ? "Sign In" : "Sign Up"}
+                {loading ? "Processing..." : "Sign In"}
               </Button>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(!isLogin)}
-                  disabled={loading}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {isLogin
-                    ? "Don't have an account? Sign up"
-                    : "Already have an account? Sign in"}
-                </button>
-              </div>
             </form>
           </CardContent>
         </Card>
