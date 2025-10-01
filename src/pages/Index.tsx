@@ -8,25 +8,24 @@ import { Shield, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CountryCodeSelect } from "@/components/CountryCodeSelect";
-
 const Index = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     countryCode: "+1",
-    phoneNumber: "",
+    phoneNumber: ""
   });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.name.trim() || !formData.phoneNumber.trim()) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -37,23 +36,22 @@ const Index = () => {
       toast({
         title: "Invalid Phone Number",
         description: "Please enter a valid phone number",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setLoading(true);
-
     try {
       const fullPhoneNumber = formData.countryCode + formData.phoneNumber;
-      
-      const { data, error } = await supabase.functions.invoke("send-otp", {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("send-otp", {
         body: {
           phoneNumber: fullPhoneNumber,
-          name: formData.name,
-        },
+          name: formData.name
+        }
       });
-
       if (error) throw error;
 
       // Check if phone number is already verified
@@ -61,14 +59,13 @@ const Index = () => {
         toast({
           title: "Already Verified",
           description: "This phone number is already verified",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       toast({
         title: "OTP Sent!",
-        description: "Check your phone for the verification code",
+        description: "Check your phone for the verification code"
       });
 
       // Navigate to verify page with phone number
@@ -78,15 +75,13 @@ const Index = () => {
       toast({
         title: "Error",
         description: error.message || "Failed to send OTP. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-accent/5">
+  return <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-accent/5">
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -113,49 +108,30 @@ const Index = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  disabled={loading}
-                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
-                />
+                <Input id="name" type="text" placeholder="John Doe" value={formData.name} onChange={e => setFormData({
+                ...formData,
+                name: e.target.value
+              })} disabled={loading} className="transition-all duration-300 focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <div className="flex gap-2">
-                  <CountryCodeSelect
-                    value={formData.countryCode}
-                    onChange={(code) => setFormData({ ...formData, countryCode: code })}
-                    disabled={loading}
-                  />
+                  <CountryCodeSelect value={formData.countryCode} onChange={code => setFormData({
+                  ...formData,
+                  countryCode: code
+                })} disabled={loading} />
                   <div className="relative flex-1">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="555-123-4567"
-                      value={formData.phoneNumber}
-                      onChange={(e) =>
-                        setFormData({ ...formData, phoneNumber: e.target.value })
-                      }
-                      disabled={loading}
-                      className="pl-10 transition-all duration-300 focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
-                    />
+                    <Input id="phone" type="tel" placeholder="555-123-4567" value={formData.phoneNumber} onChange={e => setFormData({
+                    ...formData,
+                    phoneNumber: e.target.value
+                  })} disabled={loading} className="pl-10 transition-all duration-300 focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]" />
                   </div>
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-[var(--shadow-glow)] transition-all duration-300"
-              >
+              <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-[var(--shadow-glow)] transition-all duration-300">
                 {loading ? "Sending..." : "Send Verification Code"}
               </Button>
             </form>
@@ -164,20 +140,12 @@ const Index = () => {
 
         {/* Trust Indicators */}
         <div className="text-center space-y-2">
-          <p className="text-sm text-muted-foreground">
-            🔒 Secure • 🚀 Fast • ✅ Reliable
-          </p>
-          <Button
-            variant="link"
-            onClick={() => navigate("/auth")}
-            className="text-sm text-primary"
-          >
+          
+          <Button variant="link" onClick={() => navigate("/auth")} className="text-sm text-primary">
             Officer Login
           </Button>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
