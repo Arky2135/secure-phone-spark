@@ -104,15 +104,20 @@ const Success = () => {
               <p className="text-center text-muted-foreground">No verification records found</p>
             ) : (
               <div className="space-y-3">
-                {verifications.map((record) => (
+                {verifications.map((record, index) => (
                   <div
                     key={record.id}
                     className="p-4 rounded-lg border border-border/50 bg-card/50 space-y-1"
                   >
                     <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">{record.name}</p>
-                        <p className="text-sm text-muted-foreground">{record.phone_number}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">
+                            P{String(index + 1).padStart(3, '0')}
+                          </span>
+                          <p className="font-medium text-foreground">{record.name}</p>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">{record.phone_number}</p>
                       </div>
                       {record.verified && (
                         <CheckCircle2 className="w-4 h-4 text-success" />
