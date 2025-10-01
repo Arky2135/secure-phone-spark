@@ -61,6 +61,17 @@ serve(async (req) => {
       );
     }
 
+    // Delete any existing unverified records for this phone number
+    const { error: deleteError } = await supabase
+      .from("phone_verifications")
+      .delete()
+      .eq("phone_number", phoneNumber)
+      .eq("verified", false);
+
+    if (deleteError) {
+      console.error("Error deleting old unverified records:", deleteError);
+    }
+
     console.log("Generating OTP for:", phoneNumber);
 
     // Generate OTP code
