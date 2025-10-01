@@ -29,7 +29,7 @@ const Success = () => {
       const { data, error } = await supabase
         .from("phone_verifications")
         .select("id, phone_number, name, verified, created_at")
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: true })
         .limit(10);
 
       if (error) throw error;
