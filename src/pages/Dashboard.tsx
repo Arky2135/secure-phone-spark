@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, LogOut, XCircle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,59 +155,155 @@ const Dashboard = () => {
         </div>
 
         {/* Verification Records */}
-        <Card className="border-border/50 shadow-[var(--shadow-soft)]">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Database className="w-5 h-5 text-primary" />
-              <CardTitle>Verification Records</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <p className="text-center text-muted-foreground py-8">Loading records...</p>
-            ) : verifications.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No verification records found</p>
-            ) : (
-              <div className="space-y-3">
-                {verifications.map((record, index) => (
-                  <div
-                    key={record.id}
-                    className="p-4 rounded-lg border border-border/50 bg-card/50 hover:bg-card/80 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">
-                            #{String(index + 1).padStart(3, '0')}
-                          </span>
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="all">All Records</TabsTrigger>
+            <TabsTrigger value="verified">Verified</TabsTrigger>
+            <TabsTrigger value="failed">Failed</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="mt-6">
+            <Card className="border-border/50 shadow-[var(--shadow-soft)]">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Database className="w-5 h-5 text-primary" />
+                  <CardTitle>All Verification Records</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <p className="text-center text-muted-foreground py-8">Loading records...</p>
+                ) : verifications.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No verification records found</p>
+                ) : (
+                  <div className="space-y-3">
+                    {verifications.map((record, index) => (
+                      <div
+                        key={record.id}
+                        className="p-4 rounded-lg border border-border/50 bg-card/50 hover:bg-card/80 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">
+                                #{String(index + 1).padStart(3, '0')}
+                              </span>
+                              {record.verified ? (
+                                <span className="text-xs font-medium bg-success/10 text-success px-2 py-0.5 rounded">
+                                  Verified
+                                </span>
+                              ) : (
+                                <span className="text-xs font-medium bg-destructive/10 text-destructive px-2 py-0.5 rounded">
+                                  Failed
+                                </span>
+                              )}
+                              <p className="font-medium text-foreground">{record.name}</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{record.phone_number}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(record.created_at).toLocaleString()}
+                            </p>
+                          </div>
                           {record.verified ? (
-                            <span className="text-xs font-medium bg-success/10 text-success px-2 py-0.5 rounded">
-                              Verified
-                            </span>
+                            <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
                           ) : (
-                            <span className="text-xs font-medium bg-destructive/10 text-destructive px-2 py-0.5 rounded">
-                              Failed
-                            </span>
+                            <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
                           )}
-                          <p className="font-medium text-foreground">{record.name}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">{record.phone_number}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(record.created_at).toLocaleString()}
-                        </p>
                       </div>
-                      {record.verified ? (
-                        <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-                      )}
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="verified" className="mt-6">
+            <Card className="border-border/50 shadow-[var(--shadow-soft)]">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-success" />
+                  <CardTitle>Verified Records</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <p className="text-center text-muted-foreground py-8">Loading records...</p>
+                ) : verifications.filter(v => v.verified).length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No verified records found</p>
+                ) : (
+                  <div className="space-y-3">
+                    {verifications.filter(v => v.verified).map((record, index) => (
+                      <div
+                        key={record.id}
+                        className="p-4 rounded-lg border border-success/20 bg-success/5 hover:bg-success/10 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-mono bg-success/10 text-success px-2 py-0.5 rounded">
+                                #{String(index + 1).padStart(3, '0')}
+                              </span>
+                              <p className="font-medium text-foreground">{record.name}</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{record.phone_number}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(record.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="failed" className="mt-6">
+            <Card className="border-border/50 shadow-[var(--shadow-soft)]">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-destructive" />
+                  <CardTitle>Failed Verifications</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <p className="text-center text-muted-foreground py-8">Loading records...</p>
+                ) : verifications.filter(v => !v.verified).length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No failed records found</p>
+                ) : (
+                  <div className="space-y-3">
+                    {verifications.filter(v => !v.verified).map((record, index) => (
+                      <div
+                        key={record.id}
+                        className="p-4 rounded-lg border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-mono bg-destructive/10 text-destructive px-2 py-0.5 rounded">
+                                #{String(index + 1).padStart(3, '0')}
+                              </span>
+                              <p className="font-medium text-foreground">{record.name}</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{record.phone_number}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(record.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
