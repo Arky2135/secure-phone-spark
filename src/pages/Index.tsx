@@ -54,15 +54,6 @@ const Index = () => {
       });
       if (error) throw error;
 
-      // Check if phone number is already verified
-      if (data?.alreadyVerified) {
-        toast({
-          title: "Already Verified",
-          description: "This phone number is already verified",
-          variant: "destructive"
-        });
-        return;
-      }
       toast({
         title: "OTP Sent!",
         description: "Check your phone for the verification code"
@@ -140,10 +131,9 @@ const Index = () => {
 
         {/* Trust Indicators */}
         <div className="text-center space-y-2">
-          
-          <Button variant="link" onClick={() => navigate("/auth")} className="text-sm text-primary">
-            Officer Login
-          </Button>
+          <p className="text-xs text-muted-foreground">
+            Your information is secure and encrypted
+          </p>
         </div>
       </div>
     </div>;
