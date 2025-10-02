@@ -87,7 +87,7 @@ const Verify = () => {
     
     setLoading(true);
     try {
-      const { error } = await supabase.functions.invoke("send-otp", {
+      const { data, error } = await supabase.functions.invoke("send-otp", {
         body: {
           phoneNumber,
           name: "User", // We don't have the name here, but it's okay for resend
@@ -96,10 +96,19 @@ const Verify = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Code Resent",
-        description: "A new verification code has been sent to your phone",
-      });
+      // Show devOTP in toast if returned (for testing when SMS fails)
+      if (data?.devOTP) {
+        toast({
+          title: "Code Resent (Testing Mode)",
+          description: `Your verification code is: ${data.devOTP}`,
+          duration: 10000,
+        });
+      } else {
+        toast({
+          title: "Code Resent",
+          description: "A new verification code has been sent to your phone",
+        });
+      }
       
       // Reset timer
       setResendTimer(60);

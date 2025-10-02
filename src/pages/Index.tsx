@@ -42,7 +42,10 @@ const Index = () => {
     }
     setLoading(true);
     try {
-      const fullPhoneNumber = formData.countryCode + formData.phoneNumber;
+      // Sanitize phone number (remove spaces, dashes, parentheses)
+      const sanitizedPhone = formData.phoneNumber.replace(/[\s\-()]/g, '');
+      const fullPhoneNumber = formData.countryCode + sanitizedPhone;
+      
       const {
         data,
         error
@@ -54,10 +57,19 @@ const Index = () => {
       });
       if (error) throw error;
 
-      toast({
-        title: "OTP Sent!",
-        description: "Check your phone for the verification code"
-      });
+      // Show devOTP in toast if returned (for testing when SMS fails)
+      if (data?.devOTP) {
+        toast({
+          title: "OTP Generated (Testing Mode)",
+          description: `Your verification code is: ${data.devOTP}`,
+          duration: 10000,
+        });
+      } else {
+        toast({
+          title: "OTP Sent!",
+          description: "Check your phone for the verification code"
+        });
+      }
 
       // Navigate to verify page with phone number
       navigate(`/verify?phone=${encodeURIComponent(fullPhoneNumber)}`);

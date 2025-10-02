@@ -16,6 +16,18 @@ function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Normalize phone number to E.164 format
+function normalizePhoneNumber(phone: string): string {
+  // Remove all non-digit characters except the leading +
+  let normalized = phone.trim();
+  if (normalized.startsWith('+')) {
+    normalized = '+' + normalized.slice(1).replace(/\D/g, '');
+  } else {
+    normalized = normalized.replace(/\D/g, '');
+  }
+  return normalized;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -29,50 +41,27 @@ serve(async (req) => {
       throw new Error("Phone number and name are required");
     }
 
+    // Normalize the phone number to E.164 format
+    const normalizedPhone = normalizePhoneNumber(phoneNumber);
+    console.log("Original phone:", phoneNumber, "Normalized:", normalizedPhone);
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check if phone number is already verified
-    const { data: existingVerification, error: checkError } = await supabase
-      .from("phone_verifications")
-      .select("verified")
-      .eq("phone_number", phoneNumber)
-      .eq("verified", true)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error("Error checking existing verification:", checkError);
-    }
-
-    if (existingVerification) {
-      console.log("Phone number already verified:", phoneNumber);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "This phone number is already verified",
-          alreadyVerified: true,
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
     // Delete any existing unverified records for this phone number
     const { error: deleteError } = await supabase
       .from("phone_verifications")
       .delete()
-      .eq("phone_number", phoneNumber)
+      .eq("phone_number", normalizedPhone)
       .eq("verified", false);
 
     if (deleteError) {
       console.error("Error deleting old unverified records:", deleteError);
     }
 
-    console.log("Generating OTP for:", phoneNumber);
+    console.log("Generating new OTP for:", normalizedPhone);
 
     // Generate OTP code
     const otpCode = generateOTP();
@@ -81,7 +70,7 @@ serve(async (req) => {
     const { data, error: dbError } = await supabase
       .from("phone_verifications")
       .insert({
-        phone_number: phoneNumber,
+        phone_number: normalizedPhone,
         name: name,
         otp_code: otpCode,
         verified: false,
@@ -94,7 +83,7 @@ serve(async (req) => {
       throw new Error("Failed to store OTP");
     }
 
-    console.log("OTP stored in database:", data.id);
+    console.log("OTP stored in database:", data.id, "Code:", otpCode);
 
     // Send SMS using Twilio
     const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -126,7 +115,7 @@ serve(async (req) => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-          To: phoneNumber,
+          To: normalizedPhone,
           From: twilioPhoneNumber,
           Body: `Hello ${name}! Your verification code is: ${otpCode}. Valid for 5 minutes.`,
         }),
@@ -134,8 +123,22 @@ serve(async (req) => {
 
       if (!twilioResponse.ok) {
         const errorText = await twilioResponse.text();
-        console.error("Twilio error:", errorText);
-        throw new Error("Failed to send SMS via Twilio");
+        console.error("Twilio error response:", errorText);
+        console.error("Twilio error status:", twilioResponse.status);
+        
+        // Return success with devOTP for testing
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "OTP generated (Twilio rejected SMS)",
+            devOTP: otpCode,
+            twilioError: errorText,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
       }
 
       const twilioData = await twilioResponse.json();
@@ -152,14 +155,14 @@ serve(async (req) => {
         }
       );
     } catch (twilioError: any) {
-      console.error("Error sending SMS via Twilio:", twilioError);
+      console.error("Error sending SMS via Twilio:", twilioError.message);
       // Still return success since OTP is stored in DB
       return new Response(
         JSON.stringify({
           success: true,
           message: "OTP generated (SMS sending failed)",
           devOTP: otpCode,
-          error: twilioError.message,
+          twilioError: twilioError.message,
         }),
         {
           status: 200,
